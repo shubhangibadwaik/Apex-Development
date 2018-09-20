@@ -1,0 +1,61 @@
+public class MetadataClass{
+
+    static MetadataService.MetadataPort service = new MetadataService.MetadataPort();
+        
+    static{
+        service.SessionHeader = new MetadataService.SessionHeader_element();
+        service.SessionHeader.sessionId = UserInfo.getSessionId();                
+    }
+    
+    //Method to get the picklist values used for a Business Process
+    public static List<String> readBusinessProcess(String objectName, String businessProcessName){
+        if(objectName != null && objectName != '' && businessProcessName != null && businessProcessName != ''){
+            try{
+                String fullName = objectName + '.' + businessProcessName;
+                List<String> stageValueList = new List<String>();
+                                
+                MetadataService.IReadResult readResultInstance = MetadataClass.service.readMetadata('BusinessProcess', new String[]{fullName});
+                MetadataService.BusinessProcess[] businessProcess = ((MetadataService.ReadBusinessProcessResult)readResultInstance).records;
+                MetadataService.PicklistValue[] stageValues = businessProcess[0].values;
+                for(MetadataService.PicklistValue value : stageValues){
+                    stageValueList.add(value.fullName);
+                }
+                return stageValueList;            
+            }catch(Exception e){
+                System.debug('Exception: ' + e);
+                return null;
+            }
+        }
+        else{
+            return null;
+        }
+    }
+    
+    //Method to read picklist values for a specific record type of an object
+    public static Map<String, List<String>> readRecordTypePicklistValue(String objectName, String recordTypeName){
+        if(objectName != null && objectName != '' && recordTypeName != null && recordTypeName != ''){
+            try{
+                Map<String, List<String>> picklistNameValuesMap = new Map<String, List<String>>();
+				String fullName = objectName + '.' + recordTypeName;
+                
+                MetadataService.IReadResult readResultInstance = MetadataClass.service.readMetadata('RecordType', new String[]{fullName});
+                MetadataService.RecordType[] recordTypeList = ((MetadataService.ReadRecordTypeResult)readResultInstance).records;
+                MetadataService.RecordTypePicklistValue[] recordTypePicklistValueList = recordTypeList[0].picklistValues;
+                for(MetadataService.RecordTypePicklistValue recTypePicklist : recordTypePicklistValueList){
+                    List<String> picklistValues = new List<String>();
+                    MetadataService.PicklistValue[] picklistValuesList = recTypePicklist.values;
+                    for(MetadataService.PicklistValue value : picklistValuesList){
+                        picklistValues.add(value.fullName);
+                    }
+                    picklistNameValuesMap.put(recTypePicklist.picklist, picklistValues);
+                }                
+                return picklistNameValuesMap;
+            }catch(Exception e){
+                System.debug('Exception: ' + e);
+                return null;
+            }
+        }else{
+            return null;
+        }                  
+    }
+}
